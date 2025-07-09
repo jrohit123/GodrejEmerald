@@ -5,17 +5,24 @@ import { loadChatScript } from '@/utils/chatScriptLoader';
 
 export const useChatLoader = (webhookUrl: string) => {
   useEffect(() => {
-    const link = loadChatStyles();
+    const links = loadChatStyles();
     const script = loadChatScript(webhookUrl);
 
-    document.head.appendChild(link);
+    // Append all stylesheets
+    links.forEach(link => {
+      document.head.appendChild(link);
+    });
+    
     document.body.appendChild(script);
 
     // Cleanup function
     return () => {
-      if (document.head.contains(link)) {
-        document.head.removeChild(link);
-      }
+      links.forEach(link => {
+        if (document.head.contains(link)) {
+          document.head.removeChild(link);
+        }
+      });
+      
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
