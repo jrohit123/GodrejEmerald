@@ -1,5 +1,5 @@
 
-import { Building, Camera, MessageCircle, Phone, Menu, X } from "lucide-react";
+import { Building, Camera, Phone, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -14,7 +14,6 @@ const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
   const navItems = [
     { id: "home", label: "Home", icon: Building },
     { id: "gallery", label: "Gallery", icon: Camera },
-    { id: "chat", label: "GEMA Chat", icon: MessageCircle },
     { id: "contact", label: "Emergency", icon: Phone },
   ];
 

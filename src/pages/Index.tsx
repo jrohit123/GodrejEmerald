@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { Calendar, Camera, MessageCircle, Phone, Users, Building, Star, Shield } from "lucide-react";
+import { Calendar, Camera, Phone, Users, Building, Star, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import ImageGallery from "@/components/ImageGallery";
-import ChatBot from "@/components/ChatBot";
 import EmergencyContact from "@/components/EmergencyContact";
 
 const Index = () => {
@@ -16,8 +15,6 @@ const Index = () => {
     switch (activeSection) {
       case "gallery":
         return <ImageGallery />;
-      case "chat":
-        return <ChatBot />;
       case "contact":
         return <EmergencyContact />;
       default:
@@ -66,11 +63,11 @@ const HomeContent = ({ setActiveSection }: { setActiveSection: (section: string)
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => setActiveSection("chat")}
+                onClick={() => setActiveSection("contact")}
                 className="border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-8 py-4 text-lg rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
               >
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Chat with GEMA
+                <Phone className="mr-2 h-5 w-5" />
+                Emergency Contact
               </Button>
             </div>
           </div>
@@ -87,7 +84,7 @@ const HomeContent = ({ setActiveSection }: { setActiveSection: (section: string)
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             <Card className="hover-scale cursor-pointer group" onClick={() => setActiveSection("gallery")}>
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-200 transition-colors">
@@ -98,20 +95,6 @@ const HomeContent = ({ setActiveSection }: { setActiveSection: (section: string)
               <CardContent>
                 <CardDescription className="text-center">
                   Browse and relive memories from all community events, organized by year and event type for easy navigation.
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale cursor-pointer group" onClick={() => setActiveSection("chat")}>
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                  <MessageCircle className="h-8 w-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">GEMA Assistant</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  Get instant help and information about society rules, amenities, and services through our AI assistant.
                 </CardDescription>
               </CardContent>
             </Card>
