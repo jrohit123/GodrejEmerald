@@ -80,7 +80,7 @@ const ChatBot = () => {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'm currently offline. For urgent matters, please contact our Society Manager Rajas Dhanmeher at 9920319852.",
+        text: "I'm currently offline. For urgent matters, please contact our Society Manager.",
         isUser: false,
         timestamp: new Date(),
       };
