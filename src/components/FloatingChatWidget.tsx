@@ -1,10 +1,21 @@
 
-import { useChatLoader } from '@/hooks/useChatLoader';
+import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
 
 const FloatingChatWidget = () => {
-  useChatLoader('https://n8n-6421994137235212.kloudbeansite.com/webhook/ffee829f-6076-453e-9e6a-ba27f1c00fad/chat');
+  const handleOpenChat = () => {
+    window.open('https://n8n-6421994137235212.kloudbeansite.com/webhook/ffee829f-6076-453e-9e6a-ba27f1c00fad/chat', '_blank', 'width=400,height=600,scrollbars=yes,resizable=yes');
+  };
 
-  return null; // The n8n chat widget will handle its own rendering
+  return (
+    <Button
+      onClick={handleOpenChat}
+      className="fixed bottom-4 right-4 z-50 rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-300"
+      size="icon"
+    >
+      <MessageCircle className="h-6 w-6" />
+    </Button>
+  );
 };
 
 export default FloatingChatWidget;
