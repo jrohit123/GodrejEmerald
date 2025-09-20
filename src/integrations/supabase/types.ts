@@ -66,6 +66,7 @@ export type Database = {
           id: string
           image_name: string
           image_url: string
+          media_type: string | null
           storage_path: string | null
           updated_at: string
         }
@@ -75,6 +76,7 @@ export type Database = {
           id?: string
           image_name: string
           image_url: string
+          media_type?: string | null
           storage_path?: string | null
           updated_at?: string
         }
@@ -84,6 +86,7 @@ export type Database = {
           id?: string
           image_name?: string
           image_url?: string
+          media_type?: string | null
           storage_path?: string | null
           updated_at?: string
         }

@@ -1,37 +1,85 @@
 
-import { useState } from "react";
-import { Calendar, Camera, ArrowLeft, Grid3X3, List } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
-// Sample data structure for events
-const eventData = {
-  "2024": [
-    { name: "Diwali Celebration", date: "Nov 2024", images: 12, thumbnail: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "Holi Festival", date: "Mar 2024", images: 8, thumbnail: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "New Year Party", date: "Jan 2024", images: 15, thumbnail: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "Independence Day", date: "Aug 2024", images: 6, thumbnail: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-  ],
-  "2023": [
-    { name: "Diwali Celebration", date: "Nov 2023", images: 10, thumbnail: "https://images.unsplash.com/photo-1466442929976-97f336a657be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "Ganesh Chaturthi", date: "Sep 2023", images: 14, thumbnail: "https://images.unsplash.com/photo-1517022812141-23620dba5c23?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "Christmas Celebration", date: "Dec 2023", images: 9, thumbnail: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-  ],
-  "2022": [
-    { name: "Diwali Celebration", date: "Nov 2022", images: 8, thumbnail: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-    { name: "Annual Sports Day", date: "Oct 2022", images: 20, thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
-  ],
-};
+interface Event {
+  id: string;
+  event_name: string;
+  event_year: number;
+  event_type: string;
+  description: string;
+  created_at: string;
+}
+
+interface EventMedia {
+  id: string;
+  event_id: string;
+  image_name: string;
+  image_url: string;
+  storage_path: string;
+  media_type: 'image' | 'video';
+  created_at: string;
+}
 
 const ImageGallery = () => {
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventMedia, setEventMedia] = useState<EventMedia[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const years = Object.keys(eventData).sort((a, b) => parseInt(b) - parseInt(a));
+  useEffect(() => {
+    fetchEvents();
+    fetchEventMedia();
+  }, []);
 
-  if (selectedYear) {
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("event_year", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load events:", error);
+      return;
+    }
+
+    setEvents(data || []);
+  };
+
+  const fetchEventMedia = async () => {
+    const { data, error } = await supabase
+      .from("event_images")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load event media:", error);
+      return;
+    }
+
+    setEventMedia((data || []) as EventMedia[]);
+    setLoading(false);
+  };
+
+  // Group events by year
+  const eventsByYear = events.reduce((acc, event) => {
+    const year = event.event_year.toString();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(event);
+    return acc;
+  }, {} as Record<string, Event[]>);
+
+  const years = Object.keys(eventsByYear).sort((a, b) => parseInt(b) - parseInt(a));
+
+  if (selectedYear && !loading) {
+    const yearEvents = eventsByYear[selectedYear] || [];
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,7 +96,7 @@ const ImageGallery = () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">{selectedYear} Events</h1>
                 <p className="text-gray-600">
-                  {eventData[selectedYear as keyof typeof eventData].length} events captured
+                  {yearEvents.length} events captured
                 </p>
               </div>
             </div>
@@ -71,30 +119,65 @@ const ImageGallery = () => {
           </div>
 
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-            {eventData[selectedYear as keyof typeof eventData].map((event, index) => (
-              <Card key={index} className="hover-scale cursor-pointer group overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={event.thumbnail}
-                    alt={event.name}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 right-4">
-                    <Badge variant="secondary" className="bg-white/90 text-gray-700">
-                      {event.images} photos
-                    </Badge>
+            {yearEvents.map((event) => {
+              const eventMediaItems = eventMedia.filter(media => media.event_id === event.id);
+              const images = eventMediaItems.filter(media => media.media_type === 'image');
+              const videos = eventMediaItems.filter(media => media.media_type === 'video');
+              const firstImage = images[0];
+              
+              return (
+                <Card key={event.id} className="hover-scale cursor-pointer group overflow-hidden">
+                  <div className="relative">
+                    {firstImage ? (
+                      <img
+                        src={firstImage.image_url}
+                        alt={event.event_name}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <Camera className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4 space-y-1">
+                      {images.length > 0 && (
+                        <Badge variant="secondary" className="bg-white/90 text-gray-700">
+                          {images.length} photos
+                        </Badge>
+                      )}
+                      {videos.length > 0 && (
+                        <Badge variant="secondary" className="bg-white/90 text-gray-700 flex items-center gap-1">
+                          <Play className="h-3 w-3" />
+                          {videos.length} videos
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg">{event.name}</CardTitle>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {event.date}
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  <CardHeader>
+                    <CardTitle className="text-lg">{event.event_name}</CardTitle>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {event.event_type} • {event.event_year}
+                    </div>
+                    {event.description && (
+                      <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                    )}
+                  </CardHeader>
+                </Card>
+              );
+            })}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <Camera className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading events...</p>
         </div>
       </div>
     );
@@ -124,8 +207,13 @@ const ImageGallery = () => {
           <TabsContent value="year-view">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {years.map((year) => {
-                const events = eventData[year as keyof typeof eventData];
-                const totalImages = events.reduce((sum, event) => sum + event.images, 0);
+                const yearEvents = eventsByYear[year];
+                const yearMedia = eventMedia.filter(media => 
+                  yearEvents.some(event => event.id === media.event_id)
+                );
+                const images = yearMedia.filter(media => media.media_type === 'image');
+                const videos = yearMedia.filter(media => media.media_type === 'video');
+                const firstImage = images[0];
                 
                 return (
                   <Card
@@ -134,33 +222,50 @@ const ImageGallery = () => {
                     onClick={() => setSelectedYear(year)}
                   >
                     <div className="relative">
-                      <img
-                        src={events[0].thumbnail}
-                        alt={`${year} events`}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      {firstImage ? (
+                        <img
+                          src={firstImage.image_url}
+                          alt={`${year} events`}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <Camera className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-4 left-4 text-white">
                         <h3 className="text-2xl font-bold">{year}</h3>
-                        <p className="text-sm opacity-90">{events.length} events</p>
+                        <p className="text-sm opacity-90">{yearEvents.length} events</p>
                       </div>
-                      <div className="absolute top-4 right-4">
-                        <Badge variant="secondary" className="bg-white/90 text-gray-700">
-                          {totalImages} photos
-                        </Badge>
+                      <div className="absolute top-4 right-4 space-y-1">
+                        {images.length > 0 && (
+                          <Badge variant="secondary" className="bg-white/90 text-gray-700">
+                            {images.length} photos
+                          </Badge>
+                        )}
+                        {videos.length > 0 && (
+                          <Badge variant="secondary" className="bg-white/90 text-gray-700 flex items-center gap-1">
+                            <Play className="h-3 w-3" />
+                            {videos.length} videos
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <CardContent className="p-6">
                       <div className="space-y-2">
-                        {events.slice(0, 3).map((event, index) => (
-                          <div key={index} className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">{event.name}</span>
-                            <span className="text-gray-400">{event.images} photos</span>
-                          </div>
-                        ))}
-                        {events.length > 3 && (
+                        {yearEvents.slice(0, 3).map((event) => {
+                          const eventMediaItems = eventMedia.filter(media => media.event_id === event.id);
+                          return (
+                            <div key={event.id} className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">{event.event_name}</span>
+                              <span className="text-gray-400">{eventMediaItems.length} files</span>
+                            </div>
+                          );
+                        })}
+                        {yearEvents.length > 3 && (
                           <div className="text-sm text-gray-400 text-center pt-2">
-                            +{events.length - 3} more events
+                            +{yearEvents.length - 3} more events
                           </div>
                         )}
                       </div>
@@ -173,11 +278,13 @@ const ImageGallery = () => {
 
           <TabsContent value="event-view">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {["Diwali Celebration", "Holi Festival", "Ganesh Chaturthi", "New Year Party", "Independence Day", "Christmas Celebration"].map((eventType) => {
-                const eventCount = Object.values(eventData).flat().filter(event => event.name === eventType).length;
-                const totalImages = Object.values(eventData).flat()
-                  .filter(event => event.name === eventType)
-                  .reduce((sum, event) => sum + event.images, 0);
+              {Array.from(new Set(events.map(event => event.event_type))).map((eventType) => {
+                const typeEvents = events.filter(event => event.event_type === eventType);
+                const typeMedia = eventMedia.filter(media => 
+                  typeEvents.some(event => event.id === media.event_id)
+                );
+                const images = typeMedia.filter(media => media.media_type === 'image');
+                const videos = typeMedia.filter(media => media.media_type === 'video');
                 
                 return (
                   <Card key={eventType} className="hover-scale cursor-pointer group">
@@ -189,9 +296,11 @@ const ImageGallery = () => {
                     </CardHeader>
                     <CardContent className="text-center">
                       <div className="space-y-2">
-                        <div className="text-2xl font-bold text-emerald-600">{eventCount}</div>
+                        <div className="text-2xl font-bold text-emerald-600">{typeEvents.length}</div>
                         <div className="text-sm text-gray-500">celebrations</div>
-                        <div className="text-sm text-gray-400">{totalImages} total photos</div>
+                        <div className="text-sm text-gray-400">
+                          {images.length} photos, {videos.length} videos
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -40,9 +40,10 @@ const AdminPanel = () => {
   const [eventType, setEventType] = useState("");
   const [description, setDescription] = useState("");
 
-  // Image upload state
+  // Media upload state
   const [selectedEvent, setSelectedEvent] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
 
   useEffect(() => {
     checkUser();
@@ -103,7 +104,7 @@ const AdminPanel = () => {
     fetchEvents();
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     if (!selectedEvent) {
       toast.error("Please select an event first");
@@ -112,6 +113,7 @@ const AdminPanel = () => {
 
     setUploading(true);
     const files = Array.from(e.target.files);
+    const bucketName = mediaType === "image" ? "event-images" : "event-videos";
 
     for (const file of files) {
       const fileExt = file.name.split(".").pop();
@@ -120,7 +122,7 @@ const AdminPanel = () => {
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from("event-images")
+        .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) {
@@ -130,7 +132,7 @@ const AdminPanel = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from("event-images")
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       // Save to database
@@ -141,6 +143,7 @@ const AdminPanel = () => {
           image_name: file.name,
           image_url: publicUrl,
           storage_path: filePath,
+          media_type: mediaType,
         });
 
       if (dbError) {
@@ -149,7 +152,7 @@ const AdminPanel = () => {
     }
 
     setUploading(false);
-    toast.success("Images uploaded successfully!");
+    toast.success(`${mediaType === "image" ? "Images" : "Videos"} uploaded successfully!`);
     e.target.value = "";
   };
 
@@ -173,7 +176,7 @@ const AdminPanel = () => {
         <Tabs defaultValue="events" className="space-y-6">
           <TabsList>
             <TabsTrigger value="events">Manage Events</TabsTrigger>
-            <TabsTrigger value="images">Upload Images</TabsTrigger>
+            <TabsTrigger value="images">Upload Media</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
@@ -271,9 +274,9 @@ const AdminPanel = () => {
           <TabsContent value="images" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Upload Images</CardTitle>
+                <CardTitle>Upload Media</CardTitle>
                 <CardDescription>
-                  Upload images for existing events
+                  Upload images and videos for existing events
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -293,20 +296,32 @@ const AdminPanel = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="images">Upload Images</Label>
+                  <Label>Media Type</Label>
+                  <Select value={mediaType} onValueChange={(value: "image" | "video") => setMediaType(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image">Images</SelectItem>
+                      <SelectItem value="video">Videos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="media">Upload {mediaType === "image" ? "Images" : "Videos"}</Label>
                   <Input
-                    id="images"
+                    id="media"
                     type="file"
                     multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
+                    accept={mediaType === "image" ? "image/*" : "video/*"}
+                    onChange={handleMediaUpload}
                     disabled={uploading || !selectedEvent}
                   />
                 </div>
                 {uploading && (
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4 animate-spin" />
-                    <span>Uploading images...</span>
+                    <span>Uploading {mediaType === "image" ? "images" : "videos"}...</span>
                   </div>
                 )}
               </CardContent>
