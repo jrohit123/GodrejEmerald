@@ -28,6 +28,8 @@ interface EventMedia {
 
 const ImageGallery = () => {
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [events, setEvents] = useState<Event[]>([]);
   const [eventMedia, setEventMedia] = useState<EventMedia[]>([]);
@@ -76,6 +78,155 @@ const ImageGallery = () => {
   }, {} as Record<string, Event[]>);
 
   const years = Object.keys(eventsByYear).sort((a, b) => parseInt(b) - parseInt(a));
+
+  // Individual event gallery view
+  if (selectedEvent && !loading) {
+    const eventMediaItems = eventMedia.filter(media => media.event_id === selectedEvent.id);
+    const images = eventMediaItems.filter(media => media.media_type === 'image');
+    const videos = eventMediaItems.filter(media => media.media_type === 'video');
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedEvent(null);
+                  if (selectedEventType) {
+                    // Stay in event type view
+                  } else if (selectedYear) {
+                    // Stay in year view  
+                  }
+                }}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{selectedEvent.event_name}</h1>
+                <p className="text-gray-600">
+                  {selectedEvent.event_type} • {selectedEvent.event_year} • {images.length} photos, {videos.length} videos
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {eventMediaItems.map((media) => (
+              <div key={media.id} className="group cursor-pointer">
+                {media.media_type === 'image' ? (
+                  <img
+                    src={media.image_url}
+                    alt={media.image_name}
+                    className="w-full h-64 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                    <Play className="h-12 w-12 text-gray-400" />
+                    <span className="ml-2 text-gray-600">{media.image_name}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {eventMediaItems.length === 0 && (
+            <div className="text-center py-12">
+              <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No media files found for this event.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Event type drill-down view
+  if (selectedEventType && !loading) {
+    const typeEvents = events.filter(event => event.event_type === selectedEventType);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedEventType(null)}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Event Types</span>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{selectedEventType} Events</h1>
+                <p className="text-gray-600">
+                  {typeEvents.length} events captured
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {typeEvents.map((event) => {
+              const eventMediaItems = eventMedia.filter(media => media.event_id === event.id);
+              const images = eventMediaItems.filter(media => media.media_type === 'image');
+              const videos = eventMediaItems.filter(media => media.media_type === 'video');
+              const firstImage = images[0];
+              
+              return (
+                <Card 
+                  key={event.id} 
+                  className="hover-scale cursor-pointer group overflow-hidden"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <div className="relative">
+                    {firstImage ? (
+                      <img
+                        src={firstImage.image_url}
+                        alt={event.event_name}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <Camera className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4 space-y-1">
+                      {images.length > 0 && (
+                        <Badge variant="secondary" className="bg-white/90 text-gray-700">
+                          {images.length} photos
+                        </Badge>
+                      )}
+                      {videos.length > 0 && (
+                        <Badge variant="secondary" className="bg-white/90 text-gray-700 flex items-center gap-1">
+                          <Play className="h-3 w-3" />
+                          {videos.length} videos
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{event.event_name}</CardTitle>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {event.event_year}
+                    </div>
+                    {event.description && (
+                      <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                    )}
+                  </CardHeader>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedYear && !loading) {
     const yearEvents = eventsByYear[selectedYear] || [];
@@ -126,7 +277,11 @@ const ImageGallery = () => {
               const firstImage = images[0];
               
               return (
-                <Card key={event.id} className="hover-scale cursor-pointer group overflow-hidden">
+                <Card 
+                  key={event.id} 
+                  className="hover-scale cursor-pointer group overflow-hidden"
+                  onClick={() => setSelectedEvent(event)}
+                >
                   <div className="relative">
                     {firstImage ? (
                       <img
@@ -287,7 +442,11 @@ const ImageGallery = () => {
                 const videos = typeMedia.filter(media => media.media_type === 'video');
                 
                 return (
-                  <Card key={eventType} className="hover-scale cursor-pointer group">
+                  <Card 
+                    key={eventType} 
+                    className="hover-scale cursor-pointer group"
+                    onClick={() => setSelectedEventType(eventType)}
+                  >
                     <CardHeader className="text-center">
                       <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Camera className="h-6 w-6 text-emerald-600" />
