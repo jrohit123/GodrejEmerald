@@ -118,7 +118,7 @@ const ImageGallery = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {eventMediaItems.map((media, index) => (
+            {eventMediaItems.map((media) => (
               <div key={media.id} className="group cursor-pointer">
                 {media.media_type === 'image' ? (
                   <img
@@ -126,7 +126,8 @@ const ImageGallery = () => {
                     alt={media.image_name}
                     className="w-full h-64 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
                     onClick={() => {
-                      setLightboxIndex(index);
+                      const imageIndex = images.findIndex(img => img.id === media.id);
+                      setLightboxIndex(imageIndex);
                       setLightboxOpen(true);
                     }}
                   />
