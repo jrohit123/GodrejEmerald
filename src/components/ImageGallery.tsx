@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import ImageLightbox from "@/components/ImageLightbox";
 
 interface Event {
   id: string;
@@ -34,6 +35,8 @@ const ImageGallery = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [eventMedia, setEventMedia] = useState<EventMedia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     fetchEvents();
@@ -115,13 +118,17 @@ const ImageGallery = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {eventMediaItems.map((media) => (
+            {eventMediaItems.map((media, index) => (
               <div key={media.id} className="group cursor-pointer">
                 {media.media_type === 'image' ? (
                   <img
                     src={media.image_url}
                     alt={media.image_name}
                     className="w-full h-64 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                    onClick={() => {
+                      setLightboxIndex(index);
+                      setLightboxOpen(true);
+                    }}
                   />
                 ) : (
                   <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
@@ -132,6 +139,16 @@ const ImageGallery = () => {
               </div>
             ))}
           </div>
+
+          {lightboxOpen && images.length > 0 && (
+            <ImageLightbox
+              images={images}
+              currentIndex={lightboxIndex}
+              onClose={() => setLightboxOpen(false)}
+              onNext={() => setLightboxIndex((prev) => Math.min(prev + 1, images.length - 1))}
+              onPrevious={() => setLightboxIndex((prev) => Math.max(prev - 1, 0))}
+            />
+          )}
 
           {eventMediaItems.length === 0 && (
             <div className="text-center py-12">
