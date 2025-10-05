@@ -4,7 +4,7 @@ import { MessageCircle } from 'lucide-react';
 
 const FloatingChatWidget = () => {
   const handleOpenChat = () => {
-    window.open('https://n8n-6421994137235212.kloudbeansite.com/webhook/ffee829f-6076-453e-9e6a-ba27f1c00fad/chat', '_blank', 'width=400,height=600,scrollbars=yes,resizable=yes');
+    window.open('https://automations.aitamate.com/webhook/ffee829f-6076-453e-9e6a-ba27f1c00fad/chat', '_blank', 'width=400,height=600,scrollbars=yes,resizable=yes');
   };
 
   return (
