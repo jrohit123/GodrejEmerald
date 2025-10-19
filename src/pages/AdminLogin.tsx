@@ -11,29 +11,52 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        // Sign up
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
 
-      if (data.user) {
-        toast.success("Login successful!");
-        navigate("/admin");
+        if (data.user) {
+          toast.success("Account created! Please check your email to verify your account.");
+          navigate("/");
+        }
+      } else {
+        // Sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        if (data.user) {
+          toast.success("Login successful!");
+          navigate("/");
+        }
       }
     } catch (error) {
-      toast.error("Login failed. Please try again.");
+      toast.error(isSignUp ? "Sign up failed. Please try again." : "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -43,19 +66,21 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Admin Login</CardTitle>
+          <CardTitle>{isSignUp ? "Create Account" : "Login"}</CardTitle>
           <CardDescription>
-            Sign in to access the admin panel
+            {isSignUp 
+              ? "Create an account to like and interact with images" 
+              : "Sign in to like and interact with images"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -66,15 +91,34 @@ const AdminLogin = () => {
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
+              {isSignUp && (
+                <p className="text-xs text-gray-500">Password must be at least 6 characters</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading 
+                ? (isSignUp ? "Creating account..." : "Signing in...") 
+                : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
+          
+          <div className="mt-4 text-center text-sm">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-emerald-600 hover:text-emerald-700 underline"
+            >
+              {isSignUp 
+                ? "Already have an account? Sign in" 
+                : "Don't have an account? Create one"}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

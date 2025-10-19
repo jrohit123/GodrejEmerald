@@ -1,7 +1,10 @@
 
-import { Building, Camera, Phone, Menu, X } from "lucide-react";
+import { Building, Camera, Phone, Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface HeaderProps {
   activeSection: string;
@@ -10,6 +13,31 @@ interface HeaderProps {
 
 const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to log out");
+    } else {
+      toast.success("Logged out successfully");
+    }
+  };
 
   const navItems = [
     { id: "home", label: "Home", icon: Building },
@@ -36,7 +64,7 @@ const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-1">
+          <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
@@ -56,6 +84,34 @@ const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
                 </Button>
               );
             })}
+            
+            {/* Auth Button */}
+            {user ? (
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
+                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
+                  <User className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm text-emerald-700">{user.email}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/login")}
+                className="ml-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Login
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -95,6 +151,41 @@ const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
                   </Button>
                 );
               })}
+              
+              {/* Mobile Auth Button */}
+              <div className="pt-2 border-t border-gray-200 mt-2">
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 bg-emerald-50 rounded-lg mx-2 mb-2 flex items-center gap-2">
+                      <User className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm text-emerald-700">{user.email}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-3 justify-start text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span>Logout</span>
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      navigate("/admin/login");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 justify-start border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    <LogIn className="h-5 w-5" />
+                    <span>Login</span>
+                  </Button>
+                )}
+              </div>
             </nav>
           </div>
         )}
