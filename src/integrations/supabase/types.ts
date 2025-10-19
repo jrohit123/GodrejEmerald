@@ -136,6 +136,35 @@ export type Database = {
         }
         Relationships: []
       }
+      media_likes: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_likes_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "event_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       n8n_chat_histories_tg: {
         Row: {
           id: number

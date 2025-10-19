@@ -40,11 +40,41 @@ const ImageGallery = () => {
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [likedMedia, setLikedMedia] = useState<Set<string>>(new Set());
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchEvents();
     fetchEventMedia();
   }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchUserLikes();
+    }
+  }, [currentUserId, eventMedia]);
+
+  const fetchCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+  };
+
+  const fetchUserLikes = async () => {
+    if (!currentUserId) return;
+
+    const { data, error } = await supabase
+      .from("media_likes")
+      .select("media_id")
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      console.error("Failed to load user likes:", error);
+      return;
+    }
+
+    setLikedMedia(new Set(data.map(like => like.media_id)));
+  };
 
   const fetchEvents = async () => {
     const { data, error } = await supabase
@@ -76,23 +106,65 @@ const ImageGallery = () => {
   };
 
   const handleLike = async (mediaId: string) => {
-    const media = eventMedia.find(m => m.id === mediaId);
-    if (!media) return;
-
-    const { error } = await supabase
-      .from("event_images")
-      .update({ likes_count: media.likes_count + 1 })
-      .eq("id", mediaId);
-
-    if (error) {
-      toast.error("Failed to like image");
+    if (!currentUserId) {
+      toast.error("Please log in to like images");
       return;
     }
 
-    setEventMedia(prev => prev.map(m => 
-      m.id === mediaId ? { ...m, likes_count: m.likes_count + 1 } : m
-    ));
-    toast.success("Liked!");
+    const media = eventMedia.find(m => m.id === mediaId);
+    if (!media) return;
+
+    const isLiked = likedMedia.has(mediaId);
+
+    if (isLiked) {
+      // Unlike
+      const { error } = await supabase
+        .from("media_likes")
+        .delete()
+        .eq("media_id", mediaId)
+        .eq("user_id", currentUserId);
+
+      if (error) {
+        toast.error("Failed to unlike");
+        return;
+      }
+
+      // Update likes count
+      await supabase
+        .from("event_images")
+        .update({ likes_count: Math.max(0, media.likes_count - 1) })
+        .eq("id", mediaId);
+
+      setLikedMedia(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(mediaId);
+        return newSet;
+      });
+      setEventMedia(prev => prev.map(m => 
+        m.id === mediaId ? { ...m, likes_count: Math.max(0, m.likes_count - 1) } : m
+      ));
+    } else {
+      // Like
+      const { error } = await supabase
+        .from("media_likes")
+        .insert({ media_id: mediaId, user_id: currentUserId });
+
+      if (error) {
+        toast.error("Failed to like");
+        return;
+      }
+
+      // Update likes count
+      await supabase
+        .from("event_images")
+        .update({ likes_count: media.likes_count + 1 })
+        .eq("id", mediaId);
+
+      setLikedMedia(prev => new Set(prev).add(mediaId));
+      setEventMedia(prev => prev.map(m => 
+        m.id === mediaId ? { ...m, likes_count: m.likes_count + 1 } : m
+      ));
+    }
   };
 
   const handleShare = async (media: EventMedia) => {
@@ -188,7 +260,7 @@ const ImageGallery = () => {
                             handleLike(media.id);
                           }}
                         >
-                          <Heart className="h-4 w-4 mr-1" />
+                          <Heart className={`h-4 w-4 mr-1 ${likedMedia.has(media.id) ? 'fill-red-500 text-red-500' : ''}`} />
                           {media.likes_count}
                         </Button>
                         <Button
@@ -224,6 +296,7 @@ const ImageGallery = () => {
               onPrevious={() => setLightboxIndex((prev) => Math.max(prev - 1, 0))}
               onLike={handleLike}
               onShare={handleShare}
+              likedMedia={likedMedia}
             />
           )}
 

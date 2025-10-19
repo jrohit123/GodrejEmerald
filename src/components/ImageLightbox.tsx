@@ -10,9 +10,10 @@ interface ImageLightboxProps {
   onPrevious: () => void;
   onLike: (mediaId: string) => void;
   onShare: (media: { id: string; image_url: string; image_name: string; caption?: string; likes_count: number }) => void;
+  likedMedia: Set<string>;
 }
 
-const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious, onLike, onShare }: ImageLightboxProps) => {
+const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious, onLike, onShare, likedMedia }: ImageLightboxProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -78,7 +79,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious, onLi
             className="text-white hover:bg-white/20"
             onClick={() => onLike(currentImage.id)}
           >
-            <Heart className="h-5 w-5 mr-2" />
+            <Heart className={`h-5 w-5 mr-2 ${likedMedia.has(currentImage.id) ? 'fill-red-500 text-red-500' : ''}`} />
             {currentImage.likes_count}
           </Button>
           <Button
