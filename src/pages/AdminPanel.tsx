@@ -44,6 +44,7 @@ const AdminPanel = () => {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [uploading, setUploading] = useState(false);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [mediaCaption, setMediaCaption] = useState("");
 
   useEffect(() => {
     checkUser();
@@ -144,6 +145,8 @@ const AdminPanel = () => {
           image_url: publicUrl,
           storage_path: filePath,
           media_type: mediaType,
+          caption: mediaCaption || null,
+          likes_count: 0,
         });
 
       if (dbError) {
@@ -153,6 +156,7 @@ const AdminPanel = () => {
 
     setUploading(false);
     toast.success(`${mediaType === "image" ? "Images" : "Videos"} uploaded successfully!`);
+    setMediaCaption("");
     e.target.value = "";
   };
 
@@ -306,6 +310,16 @@ const AdminPanel = () => {
                       <SelectItem value="video">Videos</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label htmlFor="caption">Caption (optional)</Label>
+                  <Textarea
+                    id="caption"
+                    value={mediaCaption}
+                    onChange={(e) => setMediaCaption(e.target.value)}
+                    placeholder="Add a caption for the media..."
+                    rows={2}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="media">Upload {mediaType === "image" ? "Images" : "Videos"}</Label>

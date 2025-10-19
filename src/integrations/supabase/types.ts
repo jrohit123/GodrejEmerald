@@ -61,31 +61,37 @@ export type Database = {
       }
       event_images: {
         Row: {
+          caption: string | null
           created_at: string
           event_id: string
           id: string
           image_name: string
           image_url: string
+          likes_count: number
           media_type: string | null
           storage_path: string | null
           updated_at: string
         }
         Insert: {
+          caption?: string | null
           created_at?: string
           event_id: string
           id?: string
           image_name: string
           image_url: string
+          likes_count?: number
           media_type?: string | null
           storage_path?: string | null
           updated_at?: string
         }
         Update: {
+          caption?: string | null
           created_at?: string
           event_id?: string
           id?: string
           image_name?: string
           image_url?: string
+          likes_count?: number
           media_type?: string | null
           storage_path?: string | null
           updated_at?: string
@@ -225,7 +231,7 @@ export type Database = {
       }
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
+        Returns: unknown
       }
       match_documents: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }

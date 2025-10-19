@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play } from "lucide-react";
+import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import ImageLightbox from "@/components/ImageLightbox";
+import { toast } from "sonner";
 
 interface Event {
   id: string;
@@ -24,6 +25,8 @@ interface EventMedia {
   image_url: string;
   storage_path: string;
   media_type: 'image' | 'video';
+  caption?: string;
+  likes_count: number;
   created_at: string;
 }
 
@@ -70,6 +73,45 @@ const ImageGallery = () => {
 
     setEventMedia((data || []) as EventMedia[]);
     setLoading(false);
+  };
+
+  const handleLike = async (mediaId: string) => {
+    const media = eventMedia.find(m => m.id === mediaId);
+    if (!media) return;
+
+    const { error } = await supabase
+      .from("event_images")
+      .update({ likes_count: media.likes_count + 1 })
+      .eq("id", mediaId);
+
+    if (error) {
+      toast.error("Failed to like image");
+      return;
+    }
+
+    setEventMedia(prev => prev.map(m => 
+      m.id === mediaId ? { ...m, likes_count: m.likes_count + 1 } : m
+    ));
+    toast.success("Liked!");
+  };
+
+  const handleShare = async (media: EventMedia) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: media.image_name,
+          text: media.caption || media.image_name,
+          url: media.image_url,
+        });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          toast.error("Failed to share");
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(media.image_url);
+      toast.success("Link copied to clipboard!");
+    }
   };
 
   // Group events by year
@@ -119,18 +161,50 @@ const ImageGallery = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {eventMediaItems.map((media) => (
-              <div key={media.id} className="group cursor-pointer">
+              <div key={media.id} className="group">
                 {media.media_type === 'image' ? (
-                  <img
-                    src={media.image_url}
-                    alt={media.image_name}
-                    className="w-full h-64 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                    onClick={() => {
-                      const imageIndex = images.findIndex(img => img.id === media.id);
-                      setLightboxIndex(imageIndex);
-                      setLightboxOpen(true);
-                    }}
-                  />
+                  <div className="relative">
+                    <img
+                      src={media.image_url}
+                      alt={media.image_name}
+                      className="w-full h-64 object-cover rounded-lg cursor-pointer group-hover:scale-105 transition-transform duration-300"
+                      onClick={() => {
+                        const imageIndex = images.findIndex(img => img.id === media.id);
+                        setLightboxIndex(imageIndex);
+                        setLightboxOpen(true);
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-lg">
+                      {media.caption && (
+                        <p className="text-white text-sm mb-2">{media.caption}</p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-white hover:bg-white/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(media.id);
+                          }}
+                        >
+                          <Heart className="h-4 w-4 mr-1" />
+                          {media.likes_count}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-white hover:bg-white/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(media);
+                          }}
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
                     <Play className="h-12 w-12 text-gray-400" />
@@ -148,6 +222,8 @@ const ImageGallery = () => {
               onClose={() => setLightboxOpen(false)}
               onNext={() => setLightboxIndex((prev) => Math.min(prev + 1, images.length - 1))}
               onPrevious={() => setLightboxIndex((prev) => Math.max(prev - 1, 0))}
+              onLike={handleLike}
+              onShare={handleShare}
             />
           )}
 

@@ -1,16 +1,18 @@
 import { useEffect } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImageLightboxProps {
-  images: { id: string; image_url: string; image_name: string }[];
+  images: { id: string; image_url: string; image_name: string; caption?: string; likes_count: number }[];
   currentIndex: number;
   onClose: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  onLike: (mediaId: string) => void;
+  onShare: (media: { id: string; image_url: string; image_name: string; caption?: string; likes_count: number }) => void;
 }
 
-const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious }: ImageLightboxProps) => {
+const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious, onLike, onShare }: ImageLightboxProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -65,8 +67,31 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNext, onPrevious }: Im
         </Button>
       )}
 
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white">
-        {currentIndex + 1} / {images.length}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-white space-y-2">
+        {currentImage.caption && (
+          <p className="text-lg mb-2">{currentImage.caption}</p>
+        )}
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20"
+            onClick={() => onLike(currentImage.id)}
+          >
+            <Heart className="h-5 w-5 mr-2" />
+            {currentImage.likes_count}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20"
+            onClick={() => onShare(currentImage)}
+          >
+            <Share2 className="h-5 w-5 mr-2" />
+            Share
+          </Button>
+        </div>
+        <p className="text-sm">{currentIndex + 1} / {images.length}</p>
       </div>
     </div>
   );
