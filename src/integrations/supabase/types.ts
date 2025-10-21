@@ -38,6 +38,24 @@ export type Database = {
         }
         Relationships: []
       }
+      authorized_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       documents_google: {
         Row: {
           content: string | null
@@ -67,6 +85,7 @@ export type Database = {
           id: string
           image_name: string
           image_url: string
+          is_public: boolean
           likes_count: number
           media_type: string | null
           storage_path: string | null
@@ -79,6 +98,7 @@ export type Database = {
           id?: string
           image_name: string
           image_url: string
+          is_public?: boolean
           likes_count?: number
           media_type?: string | null
           storage_path?: string | null
@@ -91,6 +111,7 @@ export type Database = {
           id?: string
           image_name?: string
           image_url?: string
+          is_public?: boolean
           likes_count?: number
           media_type?: string | null
           storage_path?: string | null
@@ -241,6 +262,10 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      is_authorized_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       ivfflat_bit_support: {
         Args: { "": unknown }
