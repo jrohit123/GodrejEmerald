@@ -176,14 +176,26 @@ const ImageGallery = () => {
           text: media.caption || media.image_name,
           url: media.image_url,
         });
+        toast.success("Shared successfully!");
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          toast.error("Failed to share");
+          // Fallback to clipboard if share fails
+          try {
+            await navigator.clipboard.writeText(media.image_url);
+            toast.success("Link copied to clipboard!");
+          } catch (clipboardErr) {
+            toast.error("Failed to share. Please try again.");
+          }
         }
       }
     } else {
-      await navigator.clipboard.writeText(media.image_url);
-      toast.success("Link copied to clipboard!");
+      // Fallback for browsers without Web Share API
+      try {
+        await navigator.clipboard.writeText(media.image_url);
+        toast.success("Link copied to clipboard!");
+      } catch (err) {
+        toast.error("Failed to copy link. Please try again.");
+      }
     }
   };
 
