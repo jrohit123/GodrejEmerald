@@ -27,6 +27,7 @@ interface EventMedia {
   media_type: 'image' | 'video';
   caption?: string;
   likes_count: number;
+  is_public: boolean;
   created_at: string;
 }
 

@@ -20,6 +20,25 @@ const AdminLogin = () => {
 
     try {
       if (isSignUp) {
+        // Check if email is authorized before allowing signup
+        const { data: authorizedData, error: authCheckError } = await supabase
+          .from("authorized_users")
+          .select("email")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (authCheckError) {
+          toast.error("Error checking authorization. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        if (!authorizedData) {
+          toast.error("This email is not authorized to create an account. Please contact an administrator.");
+          setLoading(false);
+          return;
+        }
+
         // Sign up
         const { data, error } = await supabase.auth.signUp({
           email,
