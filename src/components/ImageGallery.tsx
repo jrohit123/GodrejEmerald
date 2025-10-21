@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart, Share2 } from "lucide-react";
+import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -168,36 +168,6 @@ const ImageGallery = () => {
     }
   };
 
-  const handleShare = async (media: EventMedia) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: media.image_name,
-          text: media.caption || media.image_name,
-          url: media.image_url,
-        });
-        toast.success("Shared successfully!");
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          // Fallback to clipboard if share fails
-          try {
-            await navigator.clipboard.writeText(media.image_url);
-            toast.success("Link copied to clipboard!");
-          } catch (clipboardErr) {
-            toast.error("Failed to share. Please try again.");
-          }
-        }
-      }
-    } else {
-      // Fallback for browsers without Web Share API
-      try {
-        await navigator.clipboard.writeText(media.image_url);
-        toast.success("Link copied to clipboard!");
-      } catch (err) {
-        toast.error("Failed to copy link. Please try again.");
-      }
-    }
-  };
 
   // Group events by year
   const eventsByYear = events.reduce((acc, event) => {
@@ -276,17 +246,6 @@ const ImageGallery = () => {
                           <Heart className={`h-4 w-4 mr-1 ${likedMedia.has(media.id) ? 'fill-red-500 text-red-500' : ''}`} />
                           {media.likes_count}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-white hover:bg-white/20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShare(media);
-                          }}
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -308,7 +267,6 @@ const ImageGallery = () => {
               onNext={() => setLightboxIndex((prev) => Math.min(prev + 1, images.length - 1))}
               onPrevious={() => setLightboxIndex((prev) => Math.max(prev - 1, 0))}
               onLike={handleLike}
-              onShare={handleShare}
               likedMedia={likedMedia}
             />
           )}
