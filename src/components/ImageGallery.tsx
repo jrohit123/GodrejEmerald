@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart } from "lucide-react";
+import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart, LogIn } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import ImageLightbox from "@/components/ImageLightbox";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface Event {
   id: string;
@@ -490,6 +492,20 @@ const ImageGallery = () => {
             Browse through memories from all our community events, organized by year for easy navigation
           </p>
         </div>
+
+        {!currentUserId && (
+          <Alert className="mb-8 max-w-3xl mx-auto bg-blue-50 border-blue-200">
+            <LogIn className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="flex items-center justify-between">
+              <span className="text-blue-900">
+                You're viewing public images only. Log in to see all event photos and videos!
+              </span>
+              <Button asChild variant="default" size="sm" className="ml-4">
+                <Link to="/login">Log In</Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="year-view" className="w-full">
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
