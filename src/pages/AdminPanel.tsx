@@ -50,6 +50,7 @@ const AdminPanel = () => {
   const [uploading, setUploading] = useState(false);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [mediaCaption, setMediaCaption] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -182,6 +183,7 @@ const AdminPanel = () => {
           media_type: mediaType,
           caption: mediaCaption || null,
           likes_count: 0,
+          is_public: isPublic,
         });
 
       if (dbError) {
@@ -192,7 +194,9 @@ const AdminPanel = () => {
     setUploading(false);
     toast.success(`${mediaType === "image" ? "Images" : "Videos"} uploaded successfully!`);
     setMediaCaption("");
+    setIsPublic(false);
     e.target.value = "";
+    fetchEventImages();
   };
 
   if (loading) {
@@ -356,6 +360,20 @@ const AdminPanel = () => {
                     placeholder="Add a caption for the media..."
                     rows={2}
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="is-public"
+                    checked={isPublic}
+                    onCheckedChange={(checked) => setIsPublic(checked as boolean)}
+                  />
+                  <Label 
+                    htmlFor="is-public"
+                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                  >
+                    {isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    Make media publicly visible
+                  </Label>
                 </div>
                 <div>
                   <Label htmlFor="media">Upload {mediaType === "image" ? "Images" : "Videos"}</Label>
