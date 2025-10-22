@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, Upload, Plus } from "lucide-react";
+import { LogOut, Upload, Plus, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Event {
   id: string;
@@ -25,6 +26,10 @@ interface EventImage {
   image_name: string;
   image_url: string;
   storage_path: string;
+  is_public: boolean;
+  media_type: string;
+  caption: string | null;
+  events: { event_name: string; event_year: number };
 }
 
 const AdminPanel = () => {
@@ -49,6 +54,7 @@ const AdminPanel = () => {
   useEffect(() => {
     checkUser();
     fetchEvents();
+    fetchEventImages();
   }, []);
 
   const checkUser = async () => {
@@ -73,6 +79,35 @@ const AdminPanel = () => {
     }
 
     setEvents(data || []);
+  };
+
+  const fetchEventImages = async () => {
+    const { data, error } = await supabase
+      .from("event_images")
+      .select("*, events(event_name, event_year)")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to load media");
+      return;
+    }
+
+    setEventImages(data || []);
+  };
+
+  const toggleImageVisibility = async (imageId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("event_images")
+      .update({ is_public: !currentStatus })
+      .eq("id", imageId);
+
+    if (error) {
+      toast.error("Failed to update visibility");
+      return;
+    }
+
+    toast.success(`Image ${!currentStatus ? "made public" : "made private"}`);
+    fetchEventImages();
   };
 
   const handleLogout = async () => {
@@ -181,6 +216,7 @@ const AdminPanel = () => {
           <TabsList>
             <TabsTrigger value="events">Manage Events</TabsTrigger>
             <TabsTrigger value="images">Upload Media</TabsTrigger>
+            <TabsTrigger value="media">Manage Media</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
@@ -338,6 +374,69 @@ const AdminPanel = () => {
                     <span>Uploading {mediaType === "image" ? "images" : "videos"}...</span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Manage Media Visibility</CardTitle>
+                <CardDescription>
+                  Control which photos and videos are publicly visible
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {eventImages.map((media) => (
+                    <div key={media.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                      <img 
+                        src={media.image_url} 
+                        alt={media.image_name}
+                        className="w-24 h-24 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium">{media.image_name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {media.events.event_name} ({media.events.event_year})
+                        </p>
+                        {media.caption && (
+                          <p className="text-sm mt-1 text-muted-foreground">{media.caption}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`public-${media.id}`}
+                            checked={media.is_public}
+                            onCheckedChange={() => toggleImageVisibility(media.id, media.is_public)}
+                          />
+                          <Label 
+                            htmlFor={`public-${media.id}`}
+                            className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                          >
+                            {media.is_public ? (
+                              <>
+                                <Eye className="w-4 h-4" />
+                                Public
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-4 h-4" />
+                                Private
+                              </>
+                            )}
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {eventImages.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      No media uploaded yet
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
