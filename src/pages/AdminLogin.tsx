@@ -54,8 +54,20 @@ const AdminLogin = () => {
         }
 
         if (data.user) {
+          // Check user role to redirect appropriately
+          const { data: userData } = await supabase
+            .from("authorized_users")
+            .select("role")
+            .eq("email", email)
+            .single();
+
           toast.success("Account created! Please check your email to verify your account.");
-          navigate("/");
+          
+          if (userData?.role === 'admin') {
+            navigate("/admin");
+          } else {
+            navigate("/");
+          }
         }
       } else {
         // Sign in
@@ -70,8 +82,20 @@ const AdminLogin = () => {
         }
 
         if (data.user) {
+          // Check user role to redirect appropriately
+          const { data: userData } = await supabase
+            .from("authorized_users")
+            .select("role")
+            .eq("email", email)
+            .single();
+
           toast.success("Login successful!");
-          navigate("/");
+          
+          if (userData?.role === 'admin') {
+            navigate("/admin");
+          } else {
+            navigate("/");
+          }
         }
       }
     } catch (error) {

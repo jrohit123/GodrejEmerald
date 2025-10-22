@@ -64,6 +64,20 @@ const AdminPanel = () => {
       navigate("/admin/login");
       return;
     }
+
+    // Check if user has admin role
+    const { data: userData, error } = await supabase
+      .from("authorized_users")
+      .select("role")
+      .eq("email", user.email)
+      .single();
+
+    if (error || userData?.role !== 'admin') {
+      toast.error("You don't have permission to access the admin panel");
+      navigate("/");
+      return;
+    }
+
     setUser(user);
     setLoading(false);
   };
