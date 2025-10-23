@@ -34,7 +34,7 @@ const AdminLogin = () => {
         }
 
         if (!authorizedData) {
-          toast.error("This email is not authorized to create an account. Please contact an administrator.");
+          toast.error("This email is not authorized to create an account. Please contact an administrator on godrejemerald.chsl@gmail.com");
           setLoading(false);
           return;
         }
