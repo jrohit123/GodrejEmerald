@@ -49,7 +49,12 @@ const AdminLogin = () => {
         });
 
         if (error) {
-          toast.error(error.message);
+          // Check if user already exists
+          if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+            toast.error("This email is already registered. Please sign in instead.");
+          } else {
+            toast.error(error.message);
+          }
           return;
         }
 
