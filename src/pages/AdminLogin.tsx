@@ -12,6 +12,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,7 +20,21 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        // Password reset flow
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/login?reset=true`,
+        });
+
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        toast.success("Password reset email sent! Please check your inbox.");
+        setIsForgotPassword(false);
+        setEmail("");
+      } else if (isSignUp) {
         // Check if email is authorized before allowing signup
         const { data: authorizedData, error: authCheckError } = await supabase
           .from("authorized_users")
@@ -104,7 +119,13 @@ const AdminLogin = () => {
         }
       }
     } catch (error) {
-      toast.error(isSignUp ? "Sign up failed. Please try again." : "Login failed. Please try again.");
+      toast.error(
+        isForgotPassword 
+          ? "Password reset failed. Please try again." 
+          : isSignUp 
+            ? "Sign up failed. Please try again." 
+            : "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -114,11 +135,15 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{isSignUp ? "Create Account" : "Login"}</CardTitle>
+          <CardTitle>
+            {isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Login"}
+          </CardTitle>
           <CardDescription>
-            {isSignUp 
-              ? "Create an account to like and interact with images" 
-              : "Sign in to like and interact with images"}
+            {isForgotPassword
+              ? "Enter your email to receive a password reset link"
+              : isSignUp 
+                ? "Create an account to like and interact with images" 
+                : "Sign in to like and interact with images"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -134,37 +159,53 @@ const AdminLogin = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-              {isSignUp && (
-                <p className="text-xs text-gray-500">Password must be at least 6 characters</p>
-              )}
-            </div>
+            {!isForgotPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+                {isSignUp && (
+                  <p className="text-xs text-gray-500">Password must be at least 6 characters</p>
+                )}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading 
-                ? (isSignUp ? "Creating account..." : "Signing in...") 
-                : (isSignUp ? "Create Account" : "Sign In")}
+                ? (isForgotPassword ? "Sending reset email..." : isSignUp ? "Creating account..." : "Signing in...") 
+                : (isForgotPassword ? "Send Reset Email" : isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
           
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-sm space-y-2">
+            {!isForgotPassword && !isSignUp && (
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-emerald-600 hover:text-emerald-700 underline block w-full"
+              >
+                Forgot password?
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-emerald-600 hover:text-emerald-700 underline"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsSignUp(!isSignUp);
+              }}
+              className="text-emerald-600 hover:text-emerald-700 underline block w-full"
             >
-              {isSignUp 
-                ? "Already have an account? Sign in" 
-                : "Don't have an account? Create one"}
+              {isForgotPassword
+                ? "Back to login"
+                : isSignUp 
+                  ? "Already have an account? Sign in" 
+                  : "Don't have an account? Create one"}
             </button>
           </div>
         </CardContent>

@@ -52,6 +52,11 @@ const AdminPanel = () => {
   const [mediaCaption, setMediaCaption] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
   useEffect(() => {
     checkUser();
     fetchEvents();
@@ -128,6 +133,36 @@ const AdminPanel = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/admin/login");
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password changed successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+
+    setChangingPassword(false);
   };
 
   const handleCreateEvent = async (e: React.FormEvent) => {
@@ -235,6 +270,7 @@ const AdminPanel = () => {
             <TabsTrigger value="events">Manage Events</TabsTrigger>
             <TabsTrigger value="images">Upload Media</TabsTrigger>
             <TabsTrigger value="media">Manage Media</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
@@ -469,6 +505,48 @@ const AdminPanel = () => {
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>
+                  Update your account password
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <Button type="submit" disabled={changingPassword}>
+                    {changingPassword ? "Changing Password..." : "Change Password"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
