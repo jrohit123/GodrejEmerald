@@ -252,9 +252,33 @@ const ImageGallery = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                    <Play className="h-12 w-12 text-gray-400" />
-                    <span className="ml-2 text-gray-600">{media.image_name}</span>
+                  <div className="relative">
+                    <video
+                      src={media.image_url}
+                      controls
+                      className="w-full h-64 object-cover rounded-lg"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-lg pointer-events-none">
+                      {media.caption && (
+                        <p className="text-white text-sm mb-2">{media.caption}</p>
+                      )}
+                      <div className="flex items-center gap-2 pointer-events-auto">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-white hover:bg-white/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(media.id);
+                          }}
+                        >
+                          <Heart className={`h-4 w-4 mr-1 ${likedMedia.has(media.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                          {media.likes_count}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
