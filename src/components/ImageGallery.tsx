@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart, LogIn } from "lucide-react";
+import { Calendar, Camera, ArrowLeft, Grid3X3, List, Play, Heart, LogIn, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import ImageLightbox from "@/components/ImageLightbox";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Event {
   id: string;
@@ -34,6 +34,7 @@ interface EventMedia {
 }
 
 const ImageGallery = () => {
+  const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -45,6 +46,7 @@ const ImageGallery = () => {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [likedMedia, setLikedMedia] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -55,12 +57,30 @@ const ImageGallery = () => {
   useEffect(() => {
     if (currentUserId) {
       fetchUserLikes();
+      checkAdminStatus();
     }
   }, [currentUserId, eventMedia]);
 
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setCurrentUserId(user?.id || null);
+  };
+
+  const checkAdminStatus = async () => {
+    if (!currentUserId) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) return;
+
+    const { data, error } = await supabase
+      .from("authorized_users")
+      .select("role")
+      .eq("email", user.email)
+      .single();
+
+    if (!error && data) {
+      setIsAdmin(data.role === "admin");
+    }
   };
 
   const fetchUserLikes = async () => {
@@ -515,6 +535,14 @@ const ImageGallery = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Browse through memories from all our community events, organized by year for easy navigation
           </p>
+          {isAdmin && (
+            <div className="mt-6">
+              <Button onClick={() => navigate("/admin")} variant="outline" className="gap-2">
+                <Shield className="h-4 w-4" />
+                Admin View
+              </Button>
+            </div>
+          )}
         </div>
 
         {!currentUserId && (
