@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, Upload, Plus, Eye, EyeOff } from "lucide-react";
+import { LogOut, Upload, Plus, Eye, EyeOff, Home } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface Event {
@@ -257,10 +257,16 @@ const AdminPanel = () => {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/")} variant="outline">
+              <Home className="w-4 h-4 mr-2" />
+              User View
+            </Button>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
